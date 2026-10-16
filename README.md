@@ -5,7 +5,7 @@ A real-time face mask detection system with a modern Streamlit web interface. Th
 ## Features
 
 - **🎨 Modern UI**: Beautiful gradient design with card-based layout and smooth animations
-- **📹 Camera**: Take a photo with the browser camera and run mask detection
+- **📹 Camera**: Live browser camera with mask detection on each frame
 - **🖼️ Image Upload**: Upload static images for mask detection
 - **🎬 Video Upload**: Analyze videos frame by frame
 - **⚙️ Adjustable Thresholds**: Customize confidence and IOU thresholds
@@ -69,7 +69,7 @@ The application will automatically open in your default web browser at `http://l
 ### Usage
 
 1. **Select Input Source** (from the sidebar):
-   - **Camera**: Allow the browser camera, then take a photo
+   - **Camera**: Click Start and allow the browser camera for live detection
    - **Upload Image**: Upload and analyze static images
    - **Upload Video**: Upload and analyze videos
 
@@ -159,7 +159,7 @@ For detailed instructions, see [DEPLOYMENT_RENDER.md](DEPLOYMENT_RENDER.md)
 
 ### Important Notes for Cloud Deployment
 
-- **Camera**: Uses the visitor's browser camera. Open the site over HTTPS and allow the camera prompt. The server does not have a webcam.
+- **Camera**: Live video from the visitor's browser. Open the site over HTTPS and allow the camera prompt. The server does not have a webcam.
 - **Model files**: Ensure model files in `models/` directory are committed to the repository
 - **OpenCV**: Render uses `opencv-python-headless` for server environments without display capabilities
 

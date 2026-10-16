@@ -1,12 +1,48 @@
-import streamlit as st
+import threading
+
+import av
 import cv2
 import numpy as np
+import streamlit as st
+from streamlit_webrtc import webrtc_streamer
 import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from backend.detector import FaceMaskDetector
+
+# Shared with the WebRTC callback thread. Mutate in place; do not rebind.
+_detect_lock = threading.Lock()
+_cam = {"detector": None, "conf": 0.5, "iou": 0.4}
+
+
+def _video_frame_callback(frame):
+    detector = _cam["detector"]
+    if detector is None:
+        return frame
+
+    img = frame.to_ndarray(format="rgb24")
+    try:
+        with _detect_lock:
+            out, info = detector.detect(
+                img.copy(),
+                conf_thresh=_cam["conf"],
+                iou_thresh=_cam["iou"],
+            )
+            summary = detector.get_detection_summary(info)
+    except Exception:
+        return frame
+
+    text = (
+        f"Faces {summary['total_faces']}  "
+        f"Mask {summary['with_mask']}  "
+        f"No mask {summary['without_mask']}  "
+        f"{summary['compliance_rate']:.0f}%"
+    )
+    cv2.rectangle(out, (0, 0), (out.shape[1], 36), (0, 0, 0), -1)
+    cv2.putText(out, text, (8, 26), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+    return av.VideoFrame.from_ndarray(out, format="rgb24")
 
 
 def main():
@@ -103,20 +139,20 @@ def show_detection(detector, image_rgb, conf_thresh, iou_thresh):
 
 def process_webcam(detector, conf_thresh, iou_thresh):
     st.header("Camera Detection")
-    st.info("Allow the browser camera prompt, then click Take Photo. The photo is sent to the server for detection.")
+    st.info("Click Start and allow the camera. Your browser sends the live video to the server for detection.")
 
-    # ponytail: still photo via the browser. Render has no webcam, so cv2.VideoCapture cannot work there.
-    camera_image = st.camera_input("Take a photo")
-    if camera_image is None:
-        return
+    _cam["detector"] = detector
+    _cam["conf"] = conf_thresh
+    _cam["iou"] = iou_thresh
 
-    file_bytes = np.asarray(bytearray(camera_image.getvalue()), dtype=np.uint8)
-    image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-    if image is None:
-        st.error("Could not read the camera photo. Take another one.")
-        return
-
-    show_detection(detector, cv2.cvtColor(image, cv2.COLOR_BGR2RGB), conf_thresh, iou_thresh)
+    # ponytail: browser WebRTC, not cv2.VideoCapture. Render has no webcam. STUN only; add a TURN server if the stream stays on Connecting.
+    webrtc_streamer(
+        key="mask-camera",
+        video_frame_callback=_video_frame_callback,
+        media_stream_constraints={"video": True, "audio": False},
+        rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+        async_processing=True,
+    )
 
 
 def process_image_upload(detector, conf_thresh, iou_thresh):

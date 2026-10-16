@@ -36,7 +36,7 @@
 
 ### Camera on Cloud
 
-The **Camera** option uses the browser camera. The visitor allows the prompt and takes a photo; detection runs on the server. The site must be served over HTTPS.
+The **Camera** option streams the visitor's browser camera over WebRTC. Detection runs on the server. The site must be served over HTTPS.
 
 ### Required Files for Deployment
 

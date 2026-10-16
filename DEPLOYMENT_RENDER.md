@@ -56,9 +56,9 @@ Click **"Create Web Service"** and wait for the deployment to complete.
 
 ### Camera
 
-Render has no webcam, so `cv2.VideoCapture` cannot open one. The **Camera** option uses the browser camera (`st.camera_input`): the visitor allows the prompt, takes a photo, and the server runs detection on that image.
+Render has no webcam, so `cv2.VideoCapture` cannot open one. The **Camera** option uses the browser camera over WebRTC: the visitor clicks Start, allows the prompt, and each frame is detected on the server.
 
-The site must be opened over HTTPS (Render provides this). The browser will ask for camera permission.
+The site must be opened over HTTPS (Render provides this). If the player stays on Connecting, the host network is blocking the media connection and a TURN server is required.
 
 ### OpenCV Headless
 
