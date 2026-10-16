@@ -14,12 +14,11 @@ from backend.detector import FaceMaskDetector
 def main():
     st.set_page_config(
         page_title="Face Mask Detection",
-        page_icon="😷",
         layout="wide",
         initial_sidebar_state="expanded"
     )
     
-    st.title("😷 Face Mask Detection System")
+    st.title("Face Mask Detection System")
     st.markdown("""
     This application detects faces in real-time and determines whether people are wearing masks.
     Uses OpenCV DNN with a pre-trained SSD model for fast and accurate detection.
@@ -177,7 +176,7 @@ def process_webcam(detector, conf_thresh, iou_thresh):
 
 
 def process_image_upload(detector, conf_thresh, iou_thresh):
-    st.header("🖼️ Image Upload Detection")
+    st.header("Image Upload Detection")
     
     uploaded_file = st.file_uploader(
         "Choose an image...",
