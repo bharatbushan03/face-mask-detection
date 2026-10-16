@@ -96,6 +96,9 @@ def process_webcam(detector, conf_thresh, iou_thresh):
     st.header("📷 Live Webcam Detection")
     st.info("Click 'Start Camera' to begin detection. Press 'Stop' to end.")
     
+    # Camera index selector
+    camera_index = st.selectbox("Select Camera", [0, 1, 2], index=0, help="Try different indices if camera doesn't work")
+    
     # Placeholder for video feed
     frame_placeholder = st.empty()
     stats_placeholder = st.empty()
@@ -116,11 +119,25 @@ def process_webcam(detector, conf_thresh, iou_thresh):
     
     # Process video if camera is running
     if st.session_state.camera_running:
-        cap = cv2.VideoCapture(0)
+        # Try to open camera with different backends
+        cap = None
+        backends = [cv2.CAP_DSHOW, cv2.CAP_MSMF, cv2.CAP_V4L2, cv2.CAP_ANY]
         
-        if not cap.isOpened():
-            st.error("Could not open webcam. Please check your camera.")
+        for backend in backends:
+            cap = cv2.VideoCapture(camera_index, backend)
+            if cap.isOpened():
+                st.success(f"Camera opened with backend: {backend}")
+                break
+        
+        if cap is None or not cap.isOpened():
+            st.error("Could not open webcam. Please try:")
+            st.error("- Select a different camera index from the dropdown")
+            st.error("- Close other applications using the camera")
+            st.error("- Check camera permissions in your system settings")
+            st.error("- Ensure camera drivers are installed")
             st.session_state.camera_running = False
+            if cap is not None:
+                cap.release()
             return
         
         st.success("Camera started! Processing frames...")
@@ -237,7 +254,7 @@ def process_image_upload(detector, conf_thresh, iou_thresh):
 
 
 def process_video_upload(detector, conf_thresh, iou_thresh):
-    st.header("🎬 Video Upload Detection")
+    st.header("Video Upload Detection")
     
     uploaded_file = st.file_uploader(
         "Choose a video...",
