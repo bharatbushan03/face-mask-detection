@@ -5,7 +5,6 @@ from PIL import Image
 import time
 import sys
 import os
-import threading
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -15,11 +14,12 @@ from backend.detector import FaceMaskDetector
 def main():
     st.set_page_config(
         page_title="Face Mask Detection",
+        page_icon="😷",
         layout="wide",
         initial_sidebar_state="expanded"
     )
     
-    st.title("Face Mask Detection System")
+    st.title("😷 Face Mask Detection System")
     st.markdown("""
     This application detects faces in real-time and determines whether people are wearing masks.
     Uses OpenCV DNN with a pre-trained SSD model for fast and accurate detection.
@@ -30,6 +30,9 @@ def main():
         st.session_state.camera_running = False
     if 'should_stop' not in st.session_state:
         st.session_state.should_stop = False
+    
+    # Check if running on cloud
+    is_cloud = os.environ.get('STREAMLIT_SERVER_TYPE') == 'cloud'
     
     # Sidebar for settings
     st.sidebar.header("Settings")
@@ -57,10 +60,17 @@ def main():
     
     # Input source selection
     st.sidebar.header("Input Source")
-    input_source = st.sidebar.radio(
-        "Choose Input Source",
-        ["Live Webcam", "Upload Image", "Upload Video"]
-    )
+    
+    if is_cloud:
+        input_source = st.sidebar.radio(
+            "Choose Input Source",
+            ["Upload Image", "Upload Video"]
+        )
+    else:
+        input_source = st.sidebar.radio(
+            "Choose Input Source",
+            ["Live Webcam", "Upload Image", "Upload Video"]
+        )
     
     # Initialize detector
     @st.cache_resource
@@ -84,24 +94,22 @@ def main():
 
 
 def process_webcam(detector, conf_thresh, iou_thresh):
-    st.header("Live Webcam Detection")
-    
-    # Control buttons
-    col1, col2 = st.columns(2)
-    start_btn = col1.button("Start Camera", key="btn_start")
-    stop_btn = col2.button("Stop Camera", key="btn_stop")
+    st.header("📷 Live Webcam Detection")
+    st.info("Click 'Start Camera' to begin detection. Press 'Stop' to end.")
     
     # Placeholder for video feed
     frame_placeholder = st.empty()
     stats_placeholder = st.empty()
     
-    # Handle start button
-    if start_btn:
+    # Start/Stop button
+    start_camera = st.button("Start Camera", key="start_webcam")
+    stop_camera = st.button("Stop Camera", key="stop_webcam")
+    
+    if start_camera:
         st.session_state.camera_running = True
         st.session_state.should_stop = False
     
-    # Handle stop button
-    if stop_btn:
+    if stop_camera:
         st.session_state.camera_running = False
         st.session_state.should_stop = True
         st.info("Camera stopped.")
@@ -116,67 +124,60 @@ def process_webcam(detector, conf_thresh, iou_thresh):
             st.session_state.camera_running = False
             return
         
-        st.success("Camera started! Processing frames in real-time...")
+        st.success("Camera started! Processing frames...")
         
         frame_count = 0
         start_time = time.time()
-        fps_display = st.empty()
         
-        try:
-            while st.session_state.camera_running and not st.session_state.should_stop:
-                ret, frame = cap.read()
-                
-                if not ret:
-                    st.error("Failed to read frame from camera")
-                    break
-                
-                # Convert BGR to RGB
-                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                
-                # Detect faces and masks
-                frame_with_detections, detection_info = detector.detect(
-                    frame_rgb,
-                    conf_thresh=conf_thresh,
-                    iou_thresh=iou_thresh
-                )
-                
-                # Get statistics
-                summary = detector.get_detection_summary(detection_info)
-                
-                # Display frame
-                frame_placeholder.image(frame_with_detections, channels="RGB", width=800)
-                
-                # Display statistics
-                with stats_placeholder.container():
-                    col1, col2, col3, col4 = st.columns(4)
-                    col1.metric("Total Faces", summary['total_faces'])
-                    col2.metric("With Mask", summary['with_mask'])
-                    col3.metric("Without Mask", summary['without_mask'])
-                    col4.metric("Compliance Rate", f"{summary['compliance_rate']:.1f}%")
-                
-                frame_count += 1
-                
-                # Calculate and display FPS every 30 frames
-                if frame_count % 30 == 0:
-                    elapsed = time.time() - start_time
-                    fps = frame_count / elapsed
-                    fps_display.caption(f"FPS: {fps:.2f} | Frames processed: {frame_count}")
-                
-                # Small delay to prevent UI freeze
-                time.sleep(0.01)
+        while st.session_state.camera_running and not st.session_state.should_stop:
+            ret, frame = cap.read()
+            
+            if not ret:
+                st.error("Failed to read frame from camera")
+                break
+            
+            # Convert BGR to RGB
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            
+            # Detect faces and masks
+            frame_with_detections, detection_info = detector.detect(
+                frame_rgb,
+                conf_thresh=conf_thresh,
+                iou_thresh=iou_thresh
+            )
+            
+            # Get statistics
+            summary = detector.get_detection_summary(detection_info)
+            
+            # Display frame
+            frame_placeholder.image(frame_with_detections, channels="RGB", width=800)
+            
+            # Display statistics
+            with stats_placeholder.container():
+                col1, col2, col3, col4 = st.columns(4)
+                col1.metric("Total Faces", summary['total_faces'])
+                col2.metric("With Mask", summary['with_mask'])
+                col3.metric("Without Mask", summary['without_mask'])
+                col4.metric("Compliance Rate", f"{summary['compliance_rate']:.1f}%")
+            
+            frame_count += 1
+            
+            # Calculate FPS
+            if frame_count % 30 == 0:
+                elapsed = time.time() - start_time
+                fps = frame_count / elapsed
+                st.caption(f"FPS: {fps:.2f}")
+            
+            # Small delay to prevent UI freeze
+            time.sleep(0.01)
         
-        finally:
-            cap.release()
-            st.session_state.camera_running = False
-            st.info("Camera stopped.")
+        cap.release()
+        st.session_state.camera_running = False
+        st.info("Camera stopped.")
 
 
 def process_image_upload(detector, conf_thresh, iou_thresh):
     st.header("🖼️ Image Upload Detection")
-    
-    # Clear previous uploaded file from session state
-    if 'uploaded_image' in st.session_state:
-        del st.session_state['uploaded_image']
     
     uploaded_file = st.file_uploader(
         "Choose an image...",
@@ -234,7 +235,6 @@ def process_image_upload(detector, conf_thresh, iou_thresh):
         
         except Exception as e:
             st.error(f"Error processing image: {str(e)}")
-            st.rerun()
 
 
 def process_video_upload(detector, conf_thresh, iou_thresh):
