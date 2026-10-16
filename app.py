@@ -136,25 +136,17 @@ def process_webcam(detector, conf_thresh, iou_thresh):
     
     # Process video if camera is running
     if st.session_state.camera_running:
-        # Try to open camera with different backends
-        cap = None
-        backends = [cv2.CAP_DSHOW, cv2.CAP_MSMF, cv2.CAP_V4L2, cv2.CAP_ANY]
+        # Try to open camera
+        cap = cv2.VideoCapture(camera_index)
         
-        for backend in backends:
-            cap = cv2.VideoCapture(camera_index, backend)
-            if cap.isOpened():
-                st.success(f"Camera opened with backend: {backend}")
-                break
-        
-        if cap is None or not cap.isOpened():
+        if not cap.isOpened():
             st.error("Could not open webcam. Please try:")
             st.error("- Select a different camera index from the dropdown")
-            st.error("- Close other applications using the camera")
-            st.error("- Check camera permissions in your system settings")
-            st.error("- Ensure camera drivers are installed")
+            st.error("- Close other applications using the camera (Zoom, Teams, etc.)")
+            st.error("- Check camera permissions in Windows Settings → Privacy → Camera")
+            st.error("- Try using an external USB camera")
+            st.error("- Restart your computer if camera is stuck")
             st.session_state.camera_running = False
-            if cap is not None:
-                cap.release()
             return
         
         st.success("Camera started! Processing frames...")
