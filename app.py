@@ -110,7 +110,7 @@ def main():
 
 
 def process_webcam(detector, conf_thresh, iou_thresh):
-    st.header("📷 Live Webcam Detection")
+    st.header("Live Webcam Detection")
     st.info("Click 'Start Camera' to begin detection. Press 'Stop' to end.")
     
     # Camera index selector
