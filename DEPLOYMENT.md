@@ -34,18 +34,9 @@
 
 ## Important Notes
 
-### Webcam Feature on Cloud
+### Camera on Cloud
 
-⚠️ **The Live Webcam feature will NOT work on Streamlit Cloud** due to browser security restrictions. 
-
-Users on the cloud version will see:
-- Only "Image Upload" and "Video Upload" options
-- A warning message explaining webcam is cloud-only
-
-For full webcam functionality, users must run the app locally:
-```bash
-streamlit run app.py
-```
+The **Camera** option uses the browser camera. The visitor allows the prompt and takes a photo; detection runs on the server. The site must be served over HTTPS.
 
 ### Required Files for Deployment
 
@@ -64,8 +55,6 @@ Ensure these files are in your repository:
 - No issues expected with current setup
 
 ## Local Deployment
-
-For full webcam functionality:
 
 ```bash
 # Clone the repository

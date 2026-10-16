@@ -1,8 +1,6 @@
 import streamlit as st
 import cv2
 import numpy as np
-from PIL import Image
-import time
 import sys
 import os
 
@@ -20,36 +18,10 @@ def main():
     
     st.title("Face Mask Detection System")
     st.markdown("""
-    This application detects faces in real-time and determines whether people are wearing masks.
+    This application detects faces and determines whether people are wearing masks.
     Uses OpenCV DNN with a pre-trained SSD model for fast and accurate detection.
     """)
-    
-    # Check if running on cloud (multiple methods)
-    is_cloud = (
-        os.environ.get('STREAMLIT_SERVER_TYPE') == 'cloud' or
-        os.environ.get('STREAMLIT_RUNTIME_ENV') == 'cloud' or
-        'STREAMLIT_SHARING_BASE_URL' in os.environ
-    )
-    
-    # Show cloud warning
-    if is_cloud:
-        st.warning("""
-        **🌐 Running on Streamlit Cloud**
-        
-        The webcam feature is not available on cloud deployments. Please use the **Image Upload** or **Video Upload** features instead.
-        
-        For webcam functionality, run the app locally:
-        ```bash
-        streamlit run app.py
-        ```
-        """)
-    
-    # Initialize session state
-    if 'camera_running' not in st.session_state:
-        st.session_state.camera_running = False
-    if 'should_stop' not in st.session_state:
-        st.session_state.should_stop = False
-    
+
     # Sidebar for settings
     st.sidebar.header("Settings")
     
@@ -77,16 +49,10 @@ def main():
     # Input source selection
     st.sidebar.header("Input Source")
     
-    if is_cloud:
-        input_source = st.sidebar.radio(
-            "Choose Input Source",
-            ["Upload Image", "Upload Video"]
-        )
-    else:
-        input_source = st.sidebar.radio(
-            "Choose Input Source",
-            ["Live Webcam", "Upload Image", "Upload Video"]
-        )
+    input_source = st.sidebar.radio(
+        "Choose Input Source",
+        ["Camera", "Upload Image", "Upload Video"]
+    )
     
     # Initialize detector
     @st.cache_resource
@@ -101,7 +67,7 @@ def main():
         return
     
     # Process based on input source
-    if input_source == "Live Webcam":
+    if input_source == "Camera":
         process_webcam(detector, conf_thresh, iou_thresh)
     elif input_source == "Upload Image":
         process_image_upload(detector, conf_thresh, iou_thresh)
@@ -109,96 +75,48 @@ def main():
         process_video_upload(detector, conf_thresh, iou_thresh)
 
 
+def show_detection(detector, image_rgb, conf_thresh, iou_thresh):
+    with st.spinner("Detecting faces and masks..."):
+        image_with_detections, detection_info = detector.detect(
+            image_rgb,
+            conf_thresh=conf_thresh,
+            iou_thresh=iou_thresh
+        )
+
+    st.subheader("Detection Results")
+    st.image(image_with_detections, channels="RGB", width=800)
+
+    summary = detector.get_detection_summary(detection_info)
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Total Faces", summary['total_faces'])
+    col2.metric("With Mask", summary['with_mask'])
+    col3.metric("Without Mask", summary['without_mask'])
+    col4.metric("Compliance Rate", f"{summary['compliance_rate']:.1f}%")
+
+    if detection_info:
+        st.subheader("Detailed Detections")
+        for i, detection in enumerate(detection_info):
+            class_id, conf, xmin, ymin, xmax, ymax = detection
+            class_name = "Mask" if class_id == 0 else "No Mask"
+            st.write(f"**Face {i+1}:** {class_name} (Confidence: {conf:.2f})")
+
+
 def process_webcam(detector, conf_thresh, iou_thresh):
-    st.header("Live Webcam Detection")
-    st.info("Click 'Start Camera' to begin detection. Press 'Stop' to end.")
-    
-    # Camera index selector
-    camera_index = st.selectbox("Select Camera", [0, 1, 2], index=0, help="Try different indices if camera doesn't work")
-    
-    # Placeholder for video feed
-    frame_placeholder = st.empty()
-    stats_placeholder = st.empty()
-    
-    # Start/Stop button
-    start_camera = st.button("Start Camera", key="start_webcam")
-    stop_camera = st.button("Stop Camera", key="stop_webcam")
-    
-    if start_camera:
-        st.session_state.camera_running = True
-        st.session_state.should_stop = False
-    
-    if stop_camera:
-        st.session_state.camera_running = False
-        st.session_state.should_stop = True
-        st.info("Camera stopped.")
+    st.header("Camera Detection")
+    st.info("Allow the browser camera prompt, then click Take Photo. The photo is sent to the server for detection.")
+
+    # ponytail: still photo via the browser. Render has no webcam, so cv2.VideoCapture cannot work there.
+    camera_image = st.camera_input("Take a photo")
+    if camera_image is None:
         return
-    
-    # Process video if camera is running
-    if st.session_state.camera_running:
-        # Try to open camera
-        cap = cv2.VideoCapture(camera_index)
-        
-        if not cap.isOpened():
-            st.error("Could not open webcam. Please try:")
-            st.error("- Select a different camera index from the dropdown")
-            st.error("- Close other applications using the camera (Zoom, Teams, etc.)")
-            st.error("- Check camera permissions in Windows Settings → Privacy → Camera")
-            st.error("- Try using an external USB camera")
-            st.error("- Restart your computer if camera is stuck")
-            st.session_state.camera_running = False
-            return
-        
-        st.success("Camera started! Processing frames...")
-        
-        frame_count = 0
-        start_time = time.time()
-        
-        while st.session_state.camera_running and not st.session_state.should_stop:
-            ret, frame = cap.read()
-            
-            if not ret:
-                st.error("Failed to read frame from camera")
-                break
-            
-            # Convert BGR to RGB
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            
-            # Detect faces and masks
-            frame_with_detections, detection_info = detector.detect(
-                frame_rgb,
-                conf_thresh=conf_thresh,
-                iou_thresh=iou_thresh
-            )
-            
-            # Get statistics
-            summary = detector.get_detection_summary(detection_info)
-            
-            # Display frame
-            frame_placeholder.image(frame_with_detections, channels="RGB", width=800)
-            
-            # Display statistics
-            with stats_placeholder.container():
-                col1, col2, col3, col4 = st.columns(4)
-                col1.metric("Total Faces", summary['total_faces'])
-                col2.metric("With Mask", summary['with_mask'])
-                col3.metric("Without Mask", summary['without_mask'])
-                col4.metric("Compliance Rate", f"{summary['compliance_rate']:.1f}%")
-            
-            frame_count += 1
-            
-            # Calculate FPS
-            if frame_count % 30 == 0:
-                elapsed = time.time() - start_time
-                fps = frame_count / elapsed
-                st.caption(f"FPS: {fps:.2f}")
-            
-            # Small delay to prevent UI freeze
-            time.sleep(0.01)
-        
-        cap.release()
-        st.session_state.camera_running = False
-        st.info("Camera stopped.")
+
+    file_bytes = np.asarray(bytearray(camera_image.getvalue()), dtype=np.uint8)
+    image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+    if image is None:
+        st.error("Could not read the camera photo. Take another one.")
+        return
+
+    show_detection(detector, cv2.cvtColor(image, cv2.COLOR_BGR2RGB), conf_thresh, iou_thresh)
 
 
 def process_image_upload(detector, conf_thresh, iou_thresh):
@@ -224,39 +142,9 @@ def process_image_upload(detector, conf_thresh, iou_thresh):
                 return
             
             image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            
-            # Display original image
             st.subheader("Original Image")
             st.image(image_rgb, channels="RGB", width=800)
-            
-            # Detect
-            with st.spinner("Detecting faces and masks..."):
-                image_with_detections, detection_info = detector.detect(
-                    image_rgb,
-                    conf_thresh=conf_thresh,
-                    iou_thresh=iou_thresh
-                )
-            
-            # Display results
-            st.subheader("Detection Results")
-            st.image(image_with_detections, channels="RGB", width=800)
-            
-            # Show statistics
-            summary = detector.get_detection_summary(detection_info)
-            
-            col1, col2, col3, col4 = st.columns(4)
-            col1.metric("Total Faces", summary['total_faces'])
-            col2.metric("With Mask", summary['with_mask'])
-            col3.metric("Without Mask", summary['without_mask'])
-            col4.metric("Compliance Rate", f"{summary['compliance_rate']:.1f}%")
-            
-            # Show detailed detections
-            if detection_info:
-                st.subheader("Detailed Detections")
-                for i, detection in enumerate(detection_info):
-                    class_id, conf, xmin, ymin, xmax, ymax = detection
-                    class_name = "Mask" if class_id == 0 else "No Mask"
-                    st.write(f"**Face {i+1}:** {class_name} (Confidence: {conf:.2f})")
+            show_detection(detector, image_rgb, conf_thresh, iou_thresh)
         
         except Exception as e:
             st.error(f"Error processing image: {str(e)}")

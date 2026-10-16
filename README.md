@@ -5,7 +5,7 @@ A real-time face mask detection system with a modern Streamlit web interface. Th
 ## Features
 
 - **🎨 Modern UI**: Beautiful gradient design with card-based layout and smooth animations
-- **📹 Live Webcam Detection** (Local Only): Real-time camera feed with instant mask detection
+- **📹 Camera**: Take a photo with the browser camera and run mask detection
 - **🖼️ Image Upload**: Upload static images for mask detection
 - **🎬 Video Upload**: Analyze videos frame by frame
 - **⚙️ Adjustable Thresholds**: Customize confidence and IOU thresholds
@@ -69,7 +69,7 @@ The application will automatically open in your default web browser at `http://l
 ### Usage
 
 1. **Select Input Source** (from the sidebar):
-   - **Live Webcam**: Real-time detection from your camera
+   - **Camera**: Allow the browser camera, then take a photo
    - **Upload Image**: Upload and analyze static images
    - **Upload Video**: Upload and analyze videos
 
@@ -159,27 +159,15 @@ For detailed instructions, see [DEPLOYMENT_RENDER.md](DEPLOYMENT_RENDER.md)
 
 ### Important Notes for Cloud Deployment
 
-- **Webcam feature**: Live webcam detection will not work on cloud deployments (Render or Streamlit Cloud) due to server-side camera access limitations. Use the Image Upload or Video Upload features instead.
+- **Camera**: Uses the visitor's browser camera. Open the site over HTTPS and allow the camera prompt. The server does not have a webcam.
 - **Model files**: Ensure model files in `models/` directory are committed to the repository
 - **OpenCV**: Render uses `opencv-python-headless` for server environments without display capabilities
 
-### Local Deployment
-
-For full webcam functionality, run the app locally:
-
-```bash
-streamlit run app.py
-```
-
 ## Troubleshooting
 
-### Camera Not Accessible (Local Only)
+### Camera blocked
 
-If the webcam is not accessible:
-- Ensure no other application is using the camera
-- Check browser permissions for camera access
-- Try restarting the browser
-- On Windows, ensure camera drivers are installed
+Allow camera access for the site in the browser. If the prompt was dismissed, reset it from the lock icon in the address bar and reload.
 
 ### Model Loading Issues
 

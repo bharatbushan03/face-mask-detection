@@ -54,13 +54,11 @@ Click **"Create Web Service"** and wait for the deployment to complete.
 
 ## Important Notes
 
-### Webcam Limitation
+### Camera
 
-The webcam feature **will not work** on Render because:
-- Render runs on cloud servers without camera hardware
-- The app uses server-side `cv2.VideoCapture(0)` which requires local camera access
+Render has no webcam, so `cv2.VideoCapture` cannot open one. The **Camera** option uses the browser camera (`st.camera_input`): the visitor allows the prompt, takes a photo, and the server runs detection on that image.
 
-**Solution**: Use the **Image Upload** or **Video Upload** features instead.
+The site must be opened over HTTPS (Render provides this). The browser will ask for camera permission.
 
 ### OpenCV Headless
 
@@ -87,9 +85,9 @@ Render will automatically redeploy when you push changes to the `master` branch.
 - Ensure all model files are in the repository
 - Verify the start command is correct
 
-### Webcam Shows "Cannot Open Camera"
+### Camera permission denied
 
-This is expected on cloud deployments. Use image/video upload instead.
+Allow camera access in the browser prompt for the Render site. If it was blocked, reset it from the lock icon in the address bar.
 
 ## Accessing Your App
 
