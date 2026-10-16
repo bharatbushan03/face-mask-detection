@@ -4,12 +4,14 @@ A real-time face mask detection system with a modern Streamlit web interface. Th
 
 ## Features
 
-- **Live Webcam Detection**: Real-time camera feed with instant mask detection
-- **Image Upload**: Upload static images for mask detection
-- **Video Upload**: Analyze videos frame by frame
-- **Adjustable Thresholds**: Customize confidence and IOU thresholds
-- **Statistics Dashboard**: Real-time statistics on mask compliance
-- **Visual Feedback**: Color-coded bounding boxes (Green = Mask, Red = No Mask)
+- **🎨 Modern UI**: Beautiful gradient design with card-based layout and smooth animations
+- **📹 Live Webcam Detection** (Local Only): Real-time camera feed with instant mask detection
+- **🖼️ Image Upload**: Upload static images for mask detection
+- **🎬 Video Upload**: Analyze videos frame by frame
+- **⚙️ Adjustable Thresholds**: Customize confidence and IOU thresholds
+- **📊 Statistics Dashboard**: Real-time statistics with beautiful metric cards
+- **🎯 Visual Feedback**: Color-coded bounding boxes (Green = Mask, Red = No Mask)
+- **✨ Icons & Emojis**: Intuitive visual elements throughout the interface
 
 ## Project Structure
 
@@ -107,9 +109,40 @@ The system uses a pre-trained SSD (Single Shot Detector) model with the followin
 | 4     | 5x5         | 0.32, 0.45   | 1, 0.62, 0.42 |
 | 5     | 3x3         | 0.64, 0.72   | 1, 0.62, 0.42 |
 
+## Deployment to Streamlit Cloud
+
+### Prerequisites
+
+1. **Push code to GitHub**:
+   - Create a new GitHub repository
+   - Push all project files to the repository
+   - Ensure `requirements.txt` and `packages.txt` are included
+
+2. **Deploy to Streamlit Cloud**:
+   - Go to [share.streamlit.io](https://share.streamlit.io)
+   - Click "New app"
+   - Connect your GitHub account
+   - Select your repository
+   - Main file path: `app.py`
+   - Click "Deploy"
+
+### Important Notes for Cloud Deployment
+
+- **Webcam feature**: Live webcam detection will not work on Streamlit Cloud due to browser security restrictions. Use the Image Upload or Video Upload features instead.
+- **Model files**: Ensure model files in `models/` directory are committed to the repository
+- **Dependencies**: The `packages.txt` file includes OpenCV system dependencies required for the cloud environment
+
+### Local Deployment
+
+For full webcam functionality, run the app locally:
+
+```bash
+streamlit run app.py
+```
+
 ## Troubleshooting
 
-### Camera Not Accessible
+### Camera Not Accessible (Local Only)
 
 If the webcam is not accessible:
 - Ensure no other application is using the camera
@@ -160,9 +193,3 @@ The Streamlit app (`app.py`) provides:
 ## License
 
 This project is open source. Please refer to the LICENSE file for details.
-
-## Credits
-
-- Original model and inference code from [AIZOO Face Mask Detection](https://github.com/AIZOO-Tech/face-mask-detect)
-- Model trained on WIDER Face and MAFA datasets
-- Dataset available on [Google Drive](https://drive.google.com/file/d/1QspxOJMDf_rAWVV7AU_Nc0rjo1_EPEDW/view?usp=sharing)
