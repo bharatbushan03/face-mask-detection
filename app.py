@@ -18,11 +18,18 @@ def main():
         initial_sidebar_state="expanded"
     )
     
-    st.title("😷 Face Mask Detection System")
+    st.title("Face Mask Detection System")
     st.markdown("""
     This application detects faces in real-time and determines whether people are wearing masks.
     Uses OpenCV DNN with a pre-trained SSD model for fast and accurate detection.
     """)
+    
+    # Check if running on cloud (multiple methods)
+    is_cloud = (
+        os.environ.get('STREAMLIT_SERVER_TYPE') == 'cloud' or
+        os.environ.get('STREAMLIT_RUNTIME_ENV') == 'cloud' or
+        'STREAMLIT_SHARING_BASE_URL' in os.environ
+    )
     
     # Show cloud warning
     if is_cloud:
@@ -42,13 +49,6 @@ def main():
         st.session_state.camera_running = False
     if 'should_stop' not in st.session_state:
         st.session_state.should_stop = False
-    
-    # Check if running on cloud (multiple methods)
-    is_cloud = (
-        os.environ.get('STREAMLIT_SERVER_TYPE') == 'cloud' or
-        os.environ.get('STREAMLIT_RUNTIME_ENV') == 'cloud' or
-        'STREAMLIT_SHARING_BASE_URL' in os.environ
-    )
     
     # Sidebar for settings
     st.sidebar.header("Settings")
