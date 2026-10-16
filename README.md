@@ -109,9 +109,40 @@ The system uses a pre-trained SSD (Single Shot Detector) model with the followin
 | 4     | 5x5         | 0.32, 0.45   | 1, 0.62, 0.42 |
 | 5     | 3x3         | 0.64, 0.72   | 1, 0.62, 0.42 |
 
-## Deployment to Streamlit Cloud
+## Deployment
 
-### Prerequisites
+You can deploy this application using either of the following platforms:
+
+### Option 1: Deploy to Render (Recommended)
+
+Render provides excellent Python support with a free tier.
+
+#### Quick Setup
+
+1. **Push code to GitHub**:
+   ```bash
+   git add .
+   git commit -m "Add Render deployment configuration"
+   git push origin master
+   ```
+
+2. **Create Render account** at [render.com](https://render.com)
+
+3. **Create Web Service**:
+   - Click "New +" → "Web Service"
+   - Connect your GitHub repository
+   - Configure:
+     - **Runtime**: Python
+     - **Build Command**: `pip install -r requirements.txt`
+     - **Start Command**: `streamlit run app.py --server.port=$PORT --server.address=0.0.0.0`
+   - Add environment variable: `PORT` = `8501`
+   - Click "Create Web Service"
+
+For detailed instructions, see [DEPLOYMENT_RENDER.md](DEPLOYMENT_RENDER.md)
+
+### Option 2: Deploy to Streamlit Cloud
+
+#### Prerequisites
 
 1. **Push code to GitHub**:
    - Create a new GitHub repository
@@ -128,9 +159,9 @@ The system uses a pre-trained SSD (Single Shot Detector) model with the followin
 
 ### Important Notes for Cloud Deployment
 
-- **Webcam feature**: Live webcam detection will not work on Streamlit Cloud due to browser security restrictions. Use the Image Upload or Video Upload features instead.
+- **Webcam feature**: Live webcam detection will not work on cloud deployments (Render or Streamlit Cloud) due to server-side camera access limitations. Use the Image Upload or Video Upload features instead.
 - **Model files**: Ensure model files in `models/` directory are committed to the repository
-- **Dependencies**: The `packages.txt` file includes OpenCV system dependencies required for the cloud environment
+- **OpenCV**: Render uses `opencv-python-headless` for server environments without display capabilities
 
 ### Local Deployment
 
