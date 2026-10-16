@@ -18,11 +18,24 @@ def main():
         initial_sidebar_state="expanded"
     )
     
-    st.title("Face Mask Detection System")
+    st.title("😷 Face Mask Detection System")
     st.markdown("""
     This application detects faces in real-time and determines whether people are wearing masks.
     Uses OpenCV DNN with a pre-trained SSD model for fast and accurate detection.
     """)
+    
+    # Show cloud warning
+    if is_cloud:
+        st.warning("""
+        **🌐 Running on Streamlit Cloud**
+        
+        The webcam feature is not available on cloud deployments. Please use the **Image Upload** or **Video Upload** features instead.
+        
+        For webcam functionality, run the app locally:
+        ```bash
+        streamlit run app.py
+        ```
+        """)
     
     # Initialize session state
     if 'camera_running' not in st.session_state:
@@ -30,8 +43,12 @@ def main():
     if 'should_stop' not in st.session_state:
         st.session_state.should_stop = False
     
-    # Check if running on cloud
-    is_cloud = os.environ.get('STREAMLIT_SERVER_TYPE') == 'cloud'
+    # Check if running on cloud (multiple methods)
+    is_cloud = (
+        os.environ.get('STREAMLIT_SERVER_TYPE') == 'cloud' or
+        os.environ.get('STREAMLIT_RUNTIME_ENV') == 'cloud' or
+        'STREAMLIT_SHARING_BASE_URL' in os.environ
+    )
     
     # Sidebar for settings
     st.sidebar.header("Settings")
